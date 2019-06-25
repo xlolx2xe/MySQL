@@ -1,0 +1,72 @@
+6/24
+顯示全部的資料庫
+show databases
+
+顯示全部的資料表
+show tables
+
+資料型態
+Number
+int => 2^32 
+tinyint => 2^8 => -128 ~ 127
+smallint => 2^16 => -32768 ~ 32767
+mediumint => 2^24
+bigint => 
+
+Float
+float => ±10^38
+double => ±10^308
+
+String
+char => 固定長度 => max255
+varchar => 變動長度 => max255
+text => max2^16
+longtest => max2^32
+
+DateTime
+datetime => 日期 時間 (yyyy-mm-dd hh:ii:ss)
+date => 日期 yyyy-mm-dd
+year => 4:1901~2155 2:1970~2069
+time 
+
+創建database
+create database
+
+創建table
+create table test (ID int(10), testa varchar(10));
+
+刪除database
+drop database databasename
+
+刪除table
+drop table tablename
+
+塞入資料
+insert into test value (1, 'test');
+
+資料表結構
+desc tablename
+
+將學生編號設為主鍵
+alter table students modify cID tinyint(2) unsigned primary key auto_increment;
+
+塞入特定欄位資料使主鍵自動遞增
+insert into sutdents (cName) value ('reg');
+
+新增成績欄位
+alter table students add column score int(10) not null default 0;
+
+修改成績順序至最前方
+alter table student modify score int(3) first;
+
+計算學生平均成績
+select avg(score) as avgscore from students;
+
+把學生名字後面加上'君'
+select concat(sName, '君') from students;
+
+加上索引鍵
+create index test on user(address)
+
+
+

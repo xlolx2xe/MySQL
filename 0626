@@ -1,0 +1,94 @@
+6/26
+自然關聯
+SELECT * FROM R NATURAL JOIN S
+自動找出相等的欄位與值進行關聯
+
+左關聯查詢、右關聯查詢
+左關聯代表依左表的欄位內容為主，捨去右表多出來的欄位。右關聯同理。
+
+union
+連接兩個以上的查詢結果
+
+全關聯
+左右關聯跟union的進階用法。
+左右關聯查出依照對應表單的內容，再用union連接，其結果就會包含左右兩表全部的欄位，並在沒有資料的欄位中補上NULL，同時刪除重複的資料。
+
+客戶員工在每個城市各有多少人
+select ce.City, ifnull(c.Customers, 0) as Customers, ifnull(e.Employees, 0) as Employees from (select distinct City from employees union select distinct City from customers) ce left join (select city, count(customerid) as Customers from customers group by city) c on ce.city = c.city left join (select city, count(employeeid) as Employees from employees group by city) e on ce.city = e.city group by city order by city;
++-----------------+-----------+-----------+
+| City            | Customers | Employees |
++-----------------+-----------+-----------+
+| Aachen          |         1 |         0 |
+| Albuquerque     |         1 |         0 |
+| Anchorage       |         1 |         0 |
+| Arhus           |         1 |         0 |
+| Barcelona       |         1 |         0 |
+| Barquisimeto    |         1 |         0 |
+| Bergamo         |         1 |         0 |
+| Berlin          |         1 |         0 |
+| Bern            |         1 |         0 |
+| Boise           |         1 |         0 |
+| Bracke          |         1 |         0 |
+| Brandenburg     |         1 |         0 |
+| Bruxelles       |         1 |         0 |
+| Buenos Aires    |         3 |         0 |
+| Butte           |         1 |         0 |
+| Campinas        |         1 |         0 |
+| Caracas         |         1 |         0 |
+| Charleroi       |         1 |         0 |
+| Cork            |         1 |         0 |
+| Cowes           |         1 |         0 |
+| Cunewalde       |         1 |         0 |
+| Elgin           |         1 |         0 |
+| Eugene          |         1 |         0 |
+| Frankfurt a.M.  |         1 |         0 |
+| Geneve          |         1 |         0 |
+| Graz            |         1 |         0 |
+| Helsinki        |         1 |         0 |
+| I. de Margarita |         1 |         0 |
+| Kirkland        |         1 |         1 |
+| Kobenhavn       |         1 |         0 |
+| Koln            |         1 |         0 |
+| Lander          |         1 |         0 |
+| Leipzig         |         1 |         0 |
+| Lille           |         1 |         0 |
+| Lisboa          |         2 |         0 |
+| London          |         6 |         4 |
+| Lulea           |         1 |         0 |
+| Lyon            |         1 |         0 |
+| Madrid          |         3 |         0 |
+| Mannheim        |         1 |         0 |
+| Marseille       |         1 |         0 |
+| Mexico D.F.     |         5 |         0 |
+| Montreal        |         1 |         0 |
+| Munchen         |         1 |         0 |
+| Munster         |         1 |         0 |
+| Nantes          |         2 |         0 |
+| Oulu            |         1 |         0 |
+| Paris           |         2 |         0 |
+| Portland        |         2 |         0 |
+| Redmond         |         0 |         1 |
+| Reggio Emilia   |         1 |         0 |
+| Reims           |         1 |         0 |
+| Resende         |         1 |         0 |
+| Rio de Janeiro  |         3 |         0 |
+| Salzburg        |         1 |         0 |
+| San Cristobal   |         1 |         0 |
+| San Francisco   |         1 |         0 |
+| Sao Paulo       |         4 |         0 |
+| Seattle         |         1 |         2 |
+| Sevilla         |         1 |         0 |
+| Stavern         |         1 |         0 |
+| Strasbourg      |         1 |         0 |
+| Stuttgart       |         1 |         0 |
+| Tacoma          |         0 |         1 |
+| Torino          |         1 |         0 |
+| Toulouse        |         1 |         0 |
+| Tsawassen       |         1 |         0 |
+| Vancouver       |         1 |         0 |
+| Versailles      |         1 |         0 |
+| Walla Walla     |         1 |         0 |
+| Warszawa        |         1 |         0 |
++-----------------+-----------+-----------+
+71 rows in set (0.002 sec)
+
