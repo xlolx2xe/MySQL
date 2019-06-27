@@ -18,7 +18,12 @@ union
 左右關聯查出依照對應表單的內容，再用union連接，其結果就會包含左右兩表全部的欄位，並在沒有資料的欄位中補上NULL，同時刪除重複的資料。
 
 客戶員工在每個城市各有多少人(全關聯+子查詢)
-select ce.City, ifnull(c.Customers, 0) as Customers, ifnull(e.Employees, 0) as Employees from (select distinct City from employees union select distinct City from customers) ce left join (select city, count(customerid) as Customers from customers group by city) c on ce.city = c.city left join (select city, count(employeeid) as Employees from employees group by city) e on ce.city = e.city group by city order by city;
+select ce.City, ifnull(c.Customers, 0) as Customers, ifnull(e.Employees, 0) as Employees 
+from (select distinct City from employees union select distinct City from customers) ce 
+left join (select city, count(customerid) as Customers from customers group by city) c on ce.city = c.city 
+left join (select city, count(employeeid) as Employees from employees group by city) e on ce.city = e.city 
+group by city 
+order by city;
 +-----------------+-----------+-----------+
 | City            | Customers | Employees |
 +-----------------+-----------+-----------+

@@ -1,0 +1,165 @@
+6/27
+找出四號員工的訂單銷售額
+select sum(unitprice * quantity) from `order details` where orderid in (select orderid from orders where employeeid = 4);
+
+join可以用using代替on來關聯相同欄位
+select a.col, b.col from aaa a join bbb b using (col);
+
+外鍵
+確保兩張table關聯的欄位必定存在
+alter table tb1 add foreign key (tb2id) references tb2(id);
+
+view
+Ccreate view viewname as ... => 形成一個table
+
+創建一個有ID term ch eng math的scores table，並以cID外鍵students
+create table scores (cID int, term int, ch int, eng int, math int);
+alter table scores modify cID tinyint(2) unsigned zerofill not null;
+alter table scores add foreign key (cID) references students(cID);
+
+關聯students跟scores並添加三成績平均欄位並製作出myscore的view資料表
+create or replace view myscore (id, name, email, term, ch, eng, math, avg) as select s.cID, s.cName, s.cEmail, sc.term, sc.ch, sc.eng, sc.math, (sc.eng + sc.ch + sc.math)/3 from students s, scores sc where sc.cid = s.cid;
+
+view新增修改刪除時同樣會影響到基本資料表
+
+create or replace 可以判斷如果沒有的話再新增
+
+創建一個關聯商品名稱跟類別名稱的view資料表
+create view ProductDetails (ProductID, ProductName, Category) as select p.productid, p.productname, c.categoryname from products p, categories c where p.categoryid = c.categoryid;
+
+設定變數
+set @var1 = 123, @var2 = 'test';set @var1 := 123, @var2 := 'test';select @var1 := 123, @var2 := 'test';
+
+delimiter 修改結尾符號
+
+設定max跟min兩個變數分別代表最高成績跟最低成績
+select @max := max(score), @min := min(score) from students;
++--------------------+--------------------+
+| @max := max(score) | @min := min(score) |
++--------------------+--------------------+
+|                106 |                  0 |
++--------------------+--------------------+
+1 row in set (0.001 sec)
+
+設定變數並不會因為原始table改變而有所變動
+
+prepare語法，準備塞入scores的資料
+prepare inputScore from 'insert into scores value (?,?,?,?,?)';
+select @id := 9, @term :=1, @ch := 80, @eng := 90, @math := 100;
+execute inputScore using @id, @term, @ch, @eng, @math;
+
+創建procedure並使用前，必須先把結束符號改變
+create procedure shownopass() begin select * from myscore where avg < 70; end#
+call shownopass();
++----+--------+---------------------+------+------+------+------+---------+
+| id | name   | email               | term | ch   | eng  | math | avg     |
++----+--------+---------------------+------+------+------+------+---------+
+| 01 | 簡奉君 | elven@superstar.com |    1 |   62 |   54 |   42 | 52.6667 |
+| 07 | 徐佳螢 | lala@superstar.com  |    4 |   41 |   68 |   55 | 54.6667 |
++----+--------+---------------------+------+------+------+------+---------+
+2 rows in set (0.002 sec)
+
+函數
+create function f1(x int, y int) returns int begin return x+y; end #
+select f1(1,2);
++---------+
+| f1(1,2) |
++---------+
+|       3 |
++---------+
+1 row in set (0.001 sec)
+
+create function f2(x int, y int) returns int begin set @x = 2 * x + y; return @x; end#
+select f2(1,2);
++---------+
+| f2(1,2) |
++---------+
+|       4 |
++---------+
+1 row in set (0.001 sec)
+
+
+floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', special:', floor(rand()*50),', '
+
+模擬樂透號碼
+create function lottery2() returns varchar(200) begin return concat(floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', ', floor(rand()*50),', special:', floor(rand()*50),', '); end#
+Query OK, 0 rows affected (0.004 sec)
+select lottery();
++-------------------------------------+
+| lottery2()                          |
++-------------------------------------+
+| 27, 39, 14, 1, 16, 26, special:32,  |
++-------------------------------------+
+1 row in set (0.000 sec)
+
+in 任意型態,out 賦予帶入之@變數值,inout
+create procedure p1(in x int, out y int, inout z int) begin select x,y,z; set x = 100, y = 200, z = 300; end#
+
+帶入變數來切割成績範圍，並回傳@pass,@down代表大於變數或小於變數的人數
+create procedure p2 (in x int, out pass int, out down int) begin select count(*) into pass from students where score > x; select count(*) into down from students where score < x; end#
+call p2(1, @pass, @down);
+select @pass, @down;
++-------+-------+
+| @pass | @down |
++-------+-------+
+|     9 |     2 |
++-------+-------+
+1 row in set (0.000 sec)
+
+in員工代號out業績、多少張單
+create procedure calwin2 (in id int, out win int, out orders int) begin select sum(od.unitprice * od.quantity * (1 - od.discount)) into win from `order details` od, orders o, employees e where o.orderid = od.orderid and o.employeeid = e.employeeid and o.employeeid = id; select count(o.orderid) into orders from employees e, orders o where e.employeeid = o.employeeid and e.employeeid = id;end#
+call calwin2(1, @win, @orders);
+select @win, @orders;
++--------+---------+
+| @win   | @orders |
++--------+---------+
+| 192108 |     123 |
++--------+---------+
+1 row in set (0.000 sec)
+
+製作一個流程自動輸入scores資料表並out math、eng、ch成績
+create procedure insertscores (in id int, in term int, in ch int, in eng int, in math int, out chout int, out engout int, out mathout int) begin insert into scores value (id, term, ch, eng, math);set mathout = math;set chout = ch;set engout = eng;end#
+call insertscores(10, 1, 100, 75, 85, @ch, @eng, @math);
+select @ch, @eng, @math;
++------+------+-------+
+| @ch  | @eng | @math |
++------+------+-------+
+|  100 |   75 |    85 |
++------+------+-------+
+1 row in set (0.000 sec)
+
+函數區域變數(declare 要集中在最前方)
+create function testfunction() returns int begin declare v1, v2 int default 2; set v1 = 100, v2 = 200; return v2;end#
+
+計算員工、供應商、客戶加總共有幾人
+create function total() returns int begin declare v1, v2, v3 int default 0; select count(*) into v1 from employees; select count(*) into v2 from customers; select count(*) into v3 from suppliers; return v1 + v2 + v3; end#
+select total();
++---------+
+| total() |
++---------+
+|     129 |
++---------+
+1 row in set (0.003 sec)
+
+寫一個function判斷輸入的成績是否大於60
+create procedure calscore(in score int) begin if score > 60 then select 'pass'; else select 'down'; end if; end#
+
+依照輸入的成績評第
+create procedure calscore(in score int) begin case when score >= 90 then select 'A';when score >= 80 then select 'B';when score >= 70 then select 'C';when score >= 60 then select 'D'; else select 'F'; end case;end#
+call calscore(90)#
++---+
+| A |
++---+
+| A |
++---+
+1 row in set (0.001 sec)
+call calscore(80)#
++---+
+| B |
++---+
+| B |
++---+
+1 row in set (0.000 sec)
+
+
+
