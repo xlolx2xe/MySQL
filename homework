@@ -1,0 +1,201 @@
+homework
+
+0. 每個辦公室的業績狀況表 
+關聯office employees customers orders oderdetail
+
+select e.OfficeCode, sum(cods.Performance) as Performance from employees e, (select c.salesrepemployeenumber as EmployeeNumber, sum(ods.Performance) Performance from customers c, (select o.CustomerNumber, sum(od.priceEach * od.quantityOrdered) as Performance from orderdetails od, orders o where o.ordernumber = od.ordernumber and o.status = 'Shipped' group by o.customernumber) ods where c.customernumber = ods.customernumber group by EmployeeNumber) cods where e.employeenumber = cods.employeenumber group by e.officecode order by Performance desc;
+
++------------+-------------+
+| OfficeCode | Performance |
++------------+-------------+
+| 4          |  2812295.95 |
+| 1          |  1329614.32 |
+| 7          |  1324325.90 |
+| 3          |  1072619.47 |
+| 6          |  1033246.60 |
+| 2          |   835882.33 |
+| 5          |   457110.07 |
++------------+-------------+
+7 rows in set (0.005 sec)
+
+驗算
+select o.CustomerNumber, sum(od.priceEach * od.quantityOrdered) as Performance from orderdetails od, orders o where o.ordernumber = od.ordernumber and o.status = 'Shipped';
++----------------+-------------+
+| CustomerNumber | Performance |
++----------------+-------------+
+|            363 |  8865094.64 |
++----------------+-------------+
+總數相等
+
+1. 業務業績排行榜, procedure
+加上時間區間(orderdate)的參數
+業績的訂單狀態 status = shipped
+
+delimiter #
+create procedure EmployeePerformanceRanking(in x date, in y date) begin select e.EmployeeNumber, sum(cods.Performance) as Performance from employees e, (select c.salesrepemployeenumber as EmployeeNumber, sum(ods.Performance) Performance from customers c, (select o.CustomerNumber, sum(od.priceEach * od.quantityOrdered) as Performance from orderdetails od, orders o where o.ordernumber = od.ordernumber and o.status = 'Shipped' and o.orderdate between '2003-01-01' and '2003-12-01' group by o.customernumber) ods where c.customernumber = ods.customernumber group by EmployeeNumber) cods where e.employeenumber = cods.employeenumber group by e.EmployeeNumber order by Performance desc;end#
+call EmployeePerformanceRanking(startdate, enddate)#
+'2003-01-01' ~ '2003-12-01'
++----------------+-------------+
+| EmployeeNumber | Performance |
++----------------+-------------+
+|           1165 |   413219.85 |
+|           1401 |   289982.88 |
+|           1621 |   267249.40 |
+|           1501 |   261536.95 |
+|           1504 |   243847.90 |
+|           1370 |   242124.75 |
+|           1611 |   226808.03 |
+|           1702 |   179648.58 |
+|           1337 |   177960.10 |
+|           1286 |   163093.50 |
+|           1188 |   160851.83 |
+|           1323 |   132760.89 |
+|           1166 |   119461.28 |
+|           1216 |    81664.41 |
+|           1612 |    34957.44 |
++----------------+-------------+
+15 rows in set (0.004 sec)
+
+驗算
+select sum(od.quantityordered * od.priceeach) as total from orderdetails od, orders o where o.ordernumber = od.ordernumber and o.orderdate between '2003-01-01' and '2003-12-01'#
++------------+
+| total      |
++------------+
+| 3089420.38 |
++------------+
+1 row in set (0.003 sec)
+該區間總額相等
+
+2. 熱銷商品排行榜, procedure
+加上時間區間(orderdate)的參數
+業績的訂單狀態 status = shipped
+
+create procedure ProductRanking(in x date, in y date) begin select od.ProductCode, sum(od.quantityordered) as Quantity from orders o, orderdetails od where o.ordernumber = od.ordernumber and o.status = 'Shipped' group by od.productcode order by quantity;end#
+call ProductRanking(startdate, enddate)#
+'2003-01-01' ~ '2003-12-01'
++-------------+----------+
+| ProductCode | Quantity |
++-------------+----------+
+| S18_4933    |      621 |
+| S24_1046    |      696 |
+| S18_2248    |      709 |
+| S700_3962   |      726 |
+| S18_4409    |      751 |
+| S24_3420    |      753 |
+| S24_2887    |      759 |
+| S18_3029    |      761 |
+| S700_2047   |      763 |
+| S18_1749    |      768 |
+| S72_3212    |      770 |
+| S24_3816    |      771 |
+| S700_1938   |      771 |
+| S24_1628    |      776 |
+| S18_2870    |      777 |
+| S18_3140    |      778 |
+| S18_1589    |      782 |
+| S700_3505   |      782 |
+| S18_2581    |      785 |
+| S18_3259    |      799 |
+| S18_3685    |      806 |
+| S72_1253    |      807 |
+| S24_3969    |      809 |
+| S18_2795    |      813 |
+| S700_1138   |      818 |
+| S700_1691   |      820 |
+| S24_1785    |      820 |
+| S24_3191    |      822 |
+| S24_3432    |      825 |
+| S700_2466   |      829 |
+| S24_2766    |      834 |
+| S24_2841    |      835 |
+| S18_1984    |      836 |
+| S24_2972    |      836 |
+| S24_4048    |      844 |
+| S32_1268    |      846 |
+| S32_4289    |      846 |
+| S10_4962    |      847 |
+| S700_2610   |      853 |
+| S18_1129    |      860 |
+| S24_1937    |      869 |
+| S700_3167   |      872 |
+| S12_1666    |      874 |
+| S12_3990    |      875 |
+| S24_4278    |      880 |
+| S24_3151    |      881 |
+| S18_2325    |      885 |
+| S18_3136    |      886 |
+| S24_2022    |      887 |
+| S24_2011    |      887 |
+| S18_4522    |      892 |
+| S32_3522    |      895 |
+| S18_1662    |      898 |
+| S24_3949    |      898 |
+| S32_4485    |      898 |
+| S12_3380    |      903 |
+| S32_2206    |      906 |
+| S32_3207    |      907 |
+| S12_1099    |      909 |
+| S18_2625    |      909 |
+| S18_1097    |      909 |
+| S10_1949    |      911 |
+| S700_2824   |      912 |
+| S18_3482    |      915 |
+| S10_4757    |      917 |
+| S32_1374    |      920 |
+| S12_3891    |      921 |
+| S24_1444    |      921 |
+| S18_4027    |      922 |
+| S700_2834   |      927 |
+| S10_4698    |      929 |
+| S18_4600    |      929 |
+| S12_3148    |      933 |
+| S18_1367    |      935 |
+| S18_3856    |      935 |
+| S50_1341    |      935 |
+| S24_2300    |      938 |
+| S24_4620    |      941 |
+| S18_4668    |      944 |
+| S32_2509    |      944 |
+| S18_2432    |      945 |
+| S50_1514    |      945 |
+| S24_3371    |      945 |
+| S24_2360    |      947 |
+| S18_1889    |      949 |
+| S12_4675    |      951 |
+| S24_2840    |      952 |
+| S10_2016    |      954 |
+| S18_2957    |      954 |
+| S24_4258    |      955 |
+| S18_2238    |      958 |
+| S18_3782    |      959 |
+| S50_1392    |      961 |
+| S700_4002   |      966 |
+| S18_2319    |      969 |
+| S18_3320    |      971 |
+| S12_1108    |      973 |
+| S18_3278    |      974 |
+| S10_1678    |      991 |
+| S50_4713    |      992 |
+| S24_1578    |      998 |
+| S12_2823    |     1007 |
+| S24_3856    |     1013 |
+| S18_4721    |     1013 |
+| S24_2000    |     1015 |
+| S12_4473    |     1023 |
+| S18_2949    |     1028 |
+| S18_1342    |     1060 |
+| S18_3232    |     1720 |
++-------------+----------+
+109 rows in set (0.004 sec)
+
+
+
+3. 業務訂單取消的比例 orders.sttaus = canceled
+canceled / all
+
+
+4. 低於商品建議售價MSRP的95%訂單及其實際售價
+
+
+5. 當訂單資料被修改及刪除的時候記錄在 log 資料表中, 時間及所有資料欄位
+
