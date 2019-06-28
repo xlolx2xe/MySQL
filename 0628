@@ -1,0 +1,61 @@
+6/28
+寫一個function透過輸入的數字回傳該月份的天數
+create function monthday(x int) returns int begin declare y int default -1; case when x = 1 then set y = 31;when x = 2 then set y = 28;when x = 3 then set y = 31;when x = 4 then set y = 30;when x = 5 then set y = 31;when x = 6 then set y = 30;when x = 7 then set y = 31;when x = 8 then set y = 31;when x = 9 then set y = 30;when x = 10 then set y = 31;when x = 11 then set y = 30;when x = 12 then set y = 31;else set y = -1;end case;return y;end#
+
+while敘述句
+計算從0累加到輸入值的數值
+create function addloop(x int) returns int begin declare y,z int default 0; while y <= x do set z = z + y;set y = y +1;end while;return z;end#
+
+repeat敘述句
+create function addrepeat2(x int) returns int begin declare sum,i int default 0;repeat set sum = sum + i;set i = i + 1;until i > x end repeat;return sum; end#
+
+loop敘述句(透過下標籤來阻止迴圈)
+create procedure looptest() begin declare i int default 0; test:loop if i < 10 then select 'test';else leave test;end if;set i = i + 1; end loop test; select i;end#
+interate 標籤 類似於continue(迭代)
+
+handler exit continue undo
+偵測輸入的錯誤編號回傳訊息
+create procedure handlertest(id int, name varchar(10), sex varchar(1), birthday date) begin declare exit handler for sqlstate '23000' begin select 'oops';end;insert into students (cid,cname,csex,cbirthday) value (id,name,sex,birthday);select 'testok';end#
+
+sqlwarning sqlexception not found_row 三種錯誤
+
+尋訪游標的敘述要在一般宣告之後、handler之前
+create procedure curstest() begin declare i, vexit,id int default 0;declare name varchar(10) default '';declare curs cursor for select cid,cname from students;declare continue handler for not found set vexit = 1; open curs;test:loop fetch curs into id,name;if vexit = 1 then leave test;end if;select concat(id,':',name);end loop test; close curs;end#
+
+製作一個尋訪，偵測分數加上有沒有及格。
+create procedure setstatus() begin declare vexit,id,thisscore int default 0;declare newstatus varchar(10) default '';declare curs cursor for select cid,score from students;declare continue handler for not found set vexit = 1;open curs; test:loop fetch curs into id,thisscore;if vexit = 1 then leave test;end if;update students set status = if(thisscore >= 60, 'pass', 'down') where cid = id;end loop test;close curs;end#
+
+觸發器
+create trigger UpdateRecord after update on students for each row begin insert into log (method) value ('update');end#
+
+old.column原資料new.column異動項目
+當有人改成績的時候紀錄LOG
+create trigger UpdateScore after update on students for each row begin if new.score > old.score then insert into slog value (old.cid, old.score, old.cname, old.csex, old.cbirthday, old.cemail, old.cphone, old.caddr, old.status, now(), new.score); end if;end#
+
+鎖定表
+lock table students read;
+
+關閉自動commit(1=開啟)
+set autocommit = 0
+
+start transaction
+rollback
+commit
+
+regexp正則表達式
+select * from student where caddr regexp '?';
+
+匯出資料
+select * into outfile 'c:/regtemp/sqlz.txt' fields terminated by ',' enclosed by '"' from students#
+
+匯入資料
+load data local infile 'c:/regtemp/sql.txt' into table news#
+
+設定全文搜尋(col,col,col)
+create fulltext index fsearch on productlines (textdescription);
+
+全文搜尋
+select productline from productlines  where match(textdescription) against('automobiles,trains');
+
+
+
